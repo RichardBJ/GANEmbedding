@@ -1,0 +1,11 @@
+-files
+phenotype1	4096Lina11GAN.csv
+and	4096Lina11raw.csv
+phenotype2	4096PYRgen.csv
+and 	4096PYRraw.csv
+phenotype3	4096edr01GAN.csv
+and 4096edr01raw.csv
+phenotype4	c035[NF=50Hz]0-32_4kGAN.csv
+and	c035[NF=50Hz]0-32_4kraw.csv
+phenotype5	pvnGAN.csv
+and pvnraw.csv
