@@ -1,0 +1,76 @@
+UMAP comparisons between each GAN and RAW.
+[1] "mlp,pheno =  1 :,i,j,k,l,1,2,3,4"
+initializing permutation analysis
+
+iteration 500 for comparison 1
+
+iteration 1000 for comparison 1
+
+1000 iterations were sucessfully completed for comparison GAN vs RAW
+GAN vs RAW 
+     0.103 
+           GAN vs RAW
+CI95%-low  0.08485137
+CI95%-high 0.12352293
+[1] ""
+[1] ""
+[1] "mlp,pheno =  2 :,i,j,k,l,5,6,7,8"
+initializing permutation analysis
+
+iteration 500 for comparison 1
+
+iteration 1000 for comparison 1
+
+1000 iterations were sucessfully completed for comparison GAN vs RAW
+GAN vs RAW 
+     0.687 
+           GAN vs RAW
+CI95%-low   0.6572396
+CI95%-high  0.7156548
+[1] ""
+[1] ""
+[1] "mlp,pheno =  3 :,i,j,k,l,9,10,11,12"
+initializing permutation analysis
+
+iteration 500 for comparison 1
+
+iteration 1000 for comparison 1
+
+1000 iterations were sucessfully completed for comparison GAN vs RAW
+GAN vs RAW 
+     0.001 
+            GAN vs RAW
+CI95%-low  0.000000000
+CI95%-high 0.003682084
+[1] ""
+[1] ""
+[1] "mlp,pheno =  4 :,i,j,k,l,13,14,15,16"
+initializing permutation analysis
+
+iteration 500 for comparison 1
+
+iteration 1000 for comparison 1
+
+1000 iterations were sucessfully completed for comparison GAN vs RAW
+GAN vs RAW 
+     0.993 
+           GAN vs RAW
+CI95%-low   0.9856308
+CI95%-high  0.9971811
+[1] ""
+[1] ""
+[1] "mlp,pheno =  5 :,i,j,k,l,17,18,19,20"
+initializing permutation analysis
+
+iteration 500 for comparison 1
+
+iteration 1000 for comparison 1
+
+1000 iterations were sucessfully completed for comparison GAN vs RAW
+GAN vs RAW 
+     0.001 
+            GAN vs RAW
+CI95%-low  0.000000000
+CI95%-high 0.003682084
+[1] ""
+[1] ""

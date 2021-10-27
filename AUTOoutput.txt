@@ -1,0 +1,12 @@
+
+This is therefore GAN1 vs GAN2, GAN1 vs GAN3....  GAN4 vs GAN5
+mlp using  1:2 and 5:6. Now real iteration:0.678181818181818
+mlp using  1:2 and 9:10. Now real iteration:0.000909090909090909
+mlp using  1:2 and 13:14. Now real iteration:0.000909090909090909
+mlp using  1:2 and 17:18. Now real iteration:0.000909090909090909
+mlp using  5:6 and 9:10. Now real iteration:0.000909090909090909
+mlp using  5:6 and 13:14. Now real iteration:0.000909090909090909
+mlp using  5:6 and 17:18. Now real iteration:0.000909090909090909
+mlp using  9:10 and 13:14. Now real iteration:0.000909090909090909
+mlp using  9:10 and 17:18. Now real iteration:0.000909090909090909
+mlp using  13:14 and 17:18. Now real iteration:0.000909090909090909
