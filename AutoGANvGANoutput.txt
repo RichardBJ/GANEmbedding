@@ -1,0 +1,53 @@
+
+method mlp using  1:2 and 5:6. Now real iteration:0.678181818181818
+0.6496704 0.7057365
+
+so really this translates to first GAN compared to second GAN pval from umap mappings is 0.7.  there are confidence intervals around that, which are actually 0.5 to 0.85
+then all the other set of combinations.
+
+
+method mlp using  1:2 and 9:10. Now real iteration:0.0333333333333333
+0 0.1157033
+quote as Pval <0.05
+
+
+
+method mlp using  1:2 and 9:10. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  1:2 and 13:14. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  1:2 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  5:6 and 9:10. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  5:6 and 13:14. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  5:6 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  9:10 and 13:14. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  9:10 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  13:14 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+
+method mlp using  1:2 and 5:6. Now real iteration:0.678181818181818
+0.6496704 0.7057365
+method mlp using  1:2 and 9:10. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  1:2 and 13:14. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  1:2 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  5:6 and 9:10. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  5:6 and 13:14. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  5:6 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  9:10 and 13:14. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  9:10 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791
+method mlp using  13:14 and 17:18. Now real iteration:0.000909090909090909
+0 0.00334791

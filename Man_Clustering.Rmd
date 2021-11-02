@@ -20,410 +20,12 @@ library(ClusterSignificance)
 
 ## Read data
 ```{r p9}
-TSNEdata=-read.table('TSNE.csv',row.names=1,header=TRUE, sep=",", stringsAsFactors = FALSE,  dec=".", fill=TRUE)
-UMAPdata=-read.table('umap.csv',row.names=1,header=TRUE, sep=",", stringsAsFactors = FALSE,  dec=".", fill=TRUE)
+TSNEdata=read.table('TSNE.csv',row.names=1,header=TRUE, sep=",", stringsAsFactors = FALSE,  dec=".", fill=TRUE)
+UMAPdata=read.table('umap.csv',row.names=1,header=TRUE, sep=",", stringsAsFactors = FALSE,  dec=".", fill=TRUE)
 ```
 
-## Kmeans first phenotype Actually, dont have to bother!
-```{r p10}
-#loose any NA
-GAN=TSNEdata[,1:2]
-GAN= GAN[complete.cases(GAN), ]
-names(GAN)=c("X","Y")
-RAW=TSNEdata[,3:4]
-RAW= RAW[complete.cases(RAW), ]
-names(RAW)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(RAW,GAN)
-data<-as.matrix(data)
-
-zm<-kmeans(data,2, nstart=25)
-zm$centers
-zclusters<-zm$cluster
-```
-##Compare GANs versus RAWS
-#pheno1
-GANx=1
-GANy=2
-RAWx=3
-RAWy=4
-
-#pheno2
-GANx=5
-GANy=6
-RAWx=7
-RAWy=8
-
-```{r p10tsne}
-dophenotype <- function (data, classes){
-   ## Permute and plot. Using mlp
-  iterations <- 100
-  pe <- permute(
-      mat = data, 
-      iter = iterations, 
-      classes = classes, 
-      projmethod = "mlp"
-  )
-  plot(pe)
-  print(ClusterSignificance::pvalue(pe))
-  print(conf.int(pe, conf.level = 0.95))
-  flush.console()
-}
-
-for (pheno in seq(1,5)){
-  i <- ((pheno-1)*4)+1
-  j <- ((pheno-1)*4)+2
-  k <- ((pheno-1)*4)+3
-  l <- ((pheno-1)*4)+4
-  text <- paste("mlp", paste("pheno = ", pheno,":"), "i,j,k,l", i,j,k,l,sep=",")
-  print(text)
-  
-  GAN=TSNEdata[,i:j]
-  GAN= GAN[complete.cases(GAN), ]
-  #rename columns so later can merge!
-  names(GAN)=c("X","Y")
-  
-  RAW=TSNEdata[,k:l]
-  RAW= RAW[complete.cases(RAW), ]
-  names(RAW)=c("X","Y")
-  # For fair test don't tell Kmeans algo we have two pops ;-)
-  data<-rbind(RAW,GAN)
-  data<-as.matrix(data)
-  class1<-rep("GAN", nrow(GAN))
-  class2<-rep("RAW",nrow(RAW))
-  classes=cbind(t(class1),t(class2))[1,]  
-  dophenotype(data,classes)
-  print("")
-  print("")
-}
-
-```
-```{r p10umap}
-dophenotype <- function (data, classes){
-   ## Permute and plot. Using mlp
-  iterations <- 1000
-  pe <- permute(
-      mat = data, 
-      iter = iterations, 
-      classes = classes, 
-      projmethod = "mlp"
-  )
-  plot(pe)
-  print(ClusterSignificance::pvalue(pe))
-  print(conf.int(pe, conf.level = 0.95))
-  flush.console()
-}
-
-for (pheno in seq(1,5)){
-  i <- ((pheno-1)*4)+1
-  j <- ((pheno-1)*4)+2
-  k <- ((pheno-1)*4)+3
-  l <- ((pheno-1)*4)+4
-  text <- paste("mlp", paste("pheno = ", pheno,":"), "i,j,k,l", i,j,k,l,sep=",")
-  print(text)
-  
-  GAN=UMAPdata[,i:j]
-  GAN= GAN[complete.cases(GAN), ]
-  #rename columns so later can merge!
-  names(GAN)=c("X","Y")
-  
-  RAW=UMAPdata[,k:l]
-  RAW= RAW[complete.cases(RAW), ]
-  names(RAW)=c("X","Y")
-  # For fair test don't tell Kmeans algo we have two pops ;-)
-  data<-rbind(RAW,GAN)
-  data<-as.matrix(data)
-  class1<-rep("GAN", nrow(GAN))
-  class2<-rep("RAW",nrow(RAW))
-  classes=cbind(t(class1),t(class2))[1,]  
-  dophenotype(data,classes)
-  print("")
-  print("")
-}
-
-```
-
-## Compare All the GANs. Have to use pcp projection with more than 2 classes
-Ambitious to take this approach best to use the above approach.... just GAN v RAW.
-In this case EVERY combination will be tested, but only the following comparisons will be useful
-1 (RAW phenotype 1)  vs 6 (GAN phenotype 1)
-and 6 v 7,8,9,10
-
-2 v 7
-and
-7 v 8,9,10
-
-3 v 8 
-and 8 v 9,10
-
-4 v 9
-and 9 v 10
-
-5 v 10
-```{r p11b}
-#5 phenotypes
-phenos<-seq(1, 19, by=2)
-#loose any NA
-combi <- data.frame(X=double(), Y=double())
-classes <- data.frame(class=character())
-count=0
-
-for (i in phenos){
-    count=count+1
-    j=i+1
-    text <- paste("i",i,"j",j)
-    print(text)
-    PHEN=TSNEdata[,i:j]
-    PHEN= as.data.frame(PHEN[complete.cases(PHEN), ])
-    phenotype <- names(PHEN)[1]
-    class <- data.frame(class=rep(phenotype,nrow(PHEN)))
-    #OK tricky to read just use i !!
-    class <- data.frame(class=rep(as.character(count),nrow(PHEN)))
-    classes=rbind(classes,class)
-    names(PHEN)=c("X","Y")
-    combi <- rbind.data.frame(combi,PHEN)
-}
-
-combi<-as.matrix(sapply(combi, as.numeric))
-
-classes <- classes$class
-unique(classes)
-loops=1000
-iterations=1
-n=10
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = combi, 
-    n=NULL,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-for (i in seq(1:loops)){
-    pe1 <- permute(
-        mat = combi, 
-        n=NULL,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-
-```
-## Compare All the GANs. Have to use pcp projection with more than 2 classes
-```{r p12tsne}
-#5 phenotypes
-gans<-seq(1, 19, by=4)
-#loose any NA
-combi <- data.frame(X=double(), Y=double())
-classes <- data.frame(class=character())
-count=0
-for (i in gans){
-    count=count+1
-    j=i+1
-    GAN=TSNEdata[,i:j]
-    GAN= GAN[complete.cases(GAN), ]
-    phenotype <- names(GAN)[1]
-    class <- data.frame(class=rep(phenotype,nrow(GAN)))
-    #OK tricky to read just use i !!
-    class <- data.frame(class=rep(as.character(count),nrow(GAN)))
-    classes=rbind(classes,class)
-    names(GAN)=c("X","Y")
-    combi <- rbind(combi,GAN)
-}
-combi<-as.matrix(combi)
-classes <- classes$class
-unique(classes)
-loops=10
-iterations=10
-n=NULL
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = combi, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-for (i in seq(1:loops)){
-    pe1 <- permute(
-        mat = combi, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-
-```
-```{r p12umap}
-#5 phenotypes All done as one projection
-gans<-seq(1, 19, by=4)
-loops=100
-iterations=10
-n=NULL
-#loose any NA
-combi <- data.frame(X=double(), Y=double())
-classes <- data.frame(class=character())
-count=0
-for (i in gans){
-    count=count+1
-    j=i+1
-    GAN=UMAPdata[,i:j]
-    GAN= GAN[complete.cases(GAN), ]
-    phenotype <- names(GAN)[1]
-    class <- data.frame(class=rep(phenotype,nrow(GAN)))
-    #OK tricky to read just use i !!
-    class <- data.frame(class=rep(as.character(count),nrow(GAN)))
-    classes=rbind(classes,class)
-    names(GAN)=c("X","Y")
-    combi <- rbind(combi,GAN)
-}
-combi<-as.matrix(combi)
-classes <- classes$class
-unique(classes)
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = combi, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-for (i in seq(1:loops)){
-    pe1 <- permute(
-        mat = combi, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-
-```
-
-#All comparisons the same so must be error...  No it is correct, but MAXIMUM p-val.
-```{r pall}
-#data<-as.data.frame(cbind(classes,combi))
-#All looks fine!!
-prj <- pcp(combi, classes)
-plot(prj)
-cl <- classify(prj)
-plot(cl)
-plot(pe)
-pvalue(pe)
-```
-## Comparing each GAN against each GAN -now trying mlp and UMAP
-```{r 1v2}
-#For all combinations to follow - 
-method='mlp' 
-#'mlp' or 'pcp'
-
-n=NULL #NULL in fact means use the lot!
-
-# "control" v "test"
-#1 v 2
-conid <- c(1:2)
-testid <- c(5:6)
-
-iterations=10
-
-minit=5000
-maxit=100000
-
-#loose any NA
-CON=UMAPdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using method
-
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = method,
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = method,
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-    perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("1v2 ",ClusterSignificance::pvalue(pe))
-write(line,file="mlpoutput.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
-```
-
-```{r allcombos, echo=FALSE}
+##Compare GANs versus respective RAWs
+```{r GANvRAW}
 #you must use either UMAPdata or TSNEdata:
 #Assign the actual variable UMAPdata to the variable name MANdata for example
 assign("MANdata", UMAPdata)
@@ -462,8 +64,99 @@ dophenotype <- function (data, classes, label){
       print(text)
       print(ClusterSignificance::pvalue(pe))
       print(conf.int(pe, conf.level = 0.95))
-      real=pe@scores.real$`Con vs Test`
-      perhits=pe@scores.vec$`Con vs Test`
+      real=pe@scores.real$`GAN vs RAW`
+      perhits=pe@scores.vec$`GAN vs RAW`
+      beats<-perhits-real
+      perhits <- length(beats[beats<0])
+      text<-paste(perhits," Hits so far")
+      print(text)
+      flush.console()
+      if ((perhits>0) & (its*iterations>minit))
+          {solved=TRUE}
+    }
+  return(pe)
+  } 
+
+for (pheno in seq(1,5)){
+  i <- ((pheno-1)*4)+1
+  j <- ((pheno-1)*4)+2
+  k <- ((pheno-1)*4)+3
+  l <- ((pheno-1)*4)+4
+
+  label <- paste(method," using  ",  i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  print(label)
+  
+  #get data and loose any NA
+  CON=MANdata[,i:j]
+  CON= CON[complete.cases(CON), ]
+  names(CON)=c("X","Y")
+  TEST=MANdata[,k:l]
+  TEST= TEST[complete.cases(TEST), ]
+  names(TEST)=c("X","Y")
+  # For fair test don't tell Kmeans algo we have two pops ;-)
+  data<-rbind(CON,TEST)
+  data<-as.matrix(data)
+  class1<-rep("GAN", nrow(TEST))
+  class2<-rep("RAW",nrow(CON))
+  classes=cbind(t(class1),t(class2))[1,]  
+  pe<-dophenotype(data,classes,label)
+  title<-paste("pheno=",pheno)
+  plot(pe,sub=title)
+  ClusterSignificance::pvalue(pe)
+  conf.int(pe, conf.level = 0.95)
+  line <- paste0(label,ClusterSignificance::pvalue(pe))
+  write(line,file="autoGANvRAWoutput.txt",append=TRUE)
+  write(conf.int(pe, conf.level = 0.95),file="autoGANvRAWoutput.txt",append=TRUE)
+}
+  
+
+```
+
+##Are the GANs different to each other?
+```{r GANvsGAN, echo=FALSE}
+#you must use either UMAPdata or TSNEdata:
+#Assign the actual variable UMAPdata to the variable name MANdata for example
+assign("MANdata", UMAPdata)
+
+minit=1000
+maxit=500000
+method="mlp"
+iterations=50
+n=NULL
+
+dophenotype <- function (data, classes, label){
+   ## Permute and plot. Using "method"
+  pe <- permute(
+      mat = data, 
+      n=n,
+      iter = iterations, 
+      classes = classes, 
+      projmethod = method,
+      verbose=FALSE)
+
+  its=0
+  solved=FALSE
+  while(solved==FALSE){
+      its=its+1
+      pe1 <- permute(
+          mat = data, 
+          n=n,
+          iter = iterations, 
+          classes = classes, 
+          projmethod = method,
+          seed=i*iterations,
+          verbose=FALSE)
+      #assimilate all loops
+      pe<-c(pe,pe1)
+      text<-paste(label,":",its*iterations)
+      print(text)
+      print(ClusterSignificance::pvalue(pe))
+      print(conf.int(pe, conf.level = 0.95))
+      labs<-unique(classes)
+      var<-paste(labs[1],"vs",labs[2])
+      real=pe@scores.real$'GAN_1 vs GAN_2'
+      perhits=pe@scores.vec$'GAN_1 vs GAN_2'
+      if (is.null(perhits)){perhits=0}
       beats<-perhits-real
       perhits <- length(beats[beats<0])
       text<-paste(perhits," Hits so far")
@@ -487,7 +180,7 @@ for (comp in comparisons){
   j <- ((as.numeric(comp[1])-1)*4)+2
   k <- ((as.numeric(comp[2])-1)*4)+1
   l <- ((as.numeric(comp[2])-1)*4)+2
-  label <- paste(method," using  ",  i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  label <- paste("method ",method," using  ",  i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
   print(label)
   
   #get data and loose any NA
@@ -500,633 +193,21 @@ for (comp in comparisons){
   # For fair test don't tell Kmeans algo we have two pops ;-)
   data<-rbind(CON,TEST)
   data<-as.matrix(data)
-  class1<-rep("Test", nrow(TEST))
-  class2<-rep("Con",nrow(CON))
+  class1<-rep('GAN_1', nrow(TEST))
+  class2<-rep('GAN_2',nrow(CON))
   classes=cbind(t(class1),t(class2))[1,]  
   pe<-dophenotype(data,classes,label)
   plot(pe)
   ClusterSignificance::pvalue(pe)
   conf.int(pe, conf.level = 0.95)
   line <- paste0(label,ClusterSignificance::pvalue(pe))
-  write(line,file="AUTOoutput.txt",append=TRUE)
-  write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
+  write(line,file="AutoGANvGANoutput.txt",append=TRUE)
+  write(conf.int(pe, conf.level = 0.95),file="AutoGANvGANoutput.txt",append=TRUE)
 }
   
 
 ```
 
-```{r 1v3}
-# "control" v "test"
-#1 v 3
-conid <- c(1:2)
-testid <- c(9:10)
-
-iterations=10
-n=NULL
-minit=5000
-maxit=100000
-
-#loose any NA
-CON=UMAPdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = method,
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = method,
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-    perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("1v2 ",ClusterSignificance::pvalue(pe))
-write(line,file="mlpoutput.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
-```
-
-```{r 1v4}
-# "control" v "test"
-#1 v 4
-conid <- c(1:2)
-testid <- c(13:14)
-
-iterations=10
-n=NULL
-minit=5000
-maxit=100000
-
-#loose any NA
-CON=UMAPdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = method,
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = method,
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-    perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("1v2 ",ClusterSignificance::pvalue(pe))
-write(line,file="mlpoutput.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
-```
-
-```{r 1v5}
-# "control" v "test"
-#1 v 5
-conid <- c(1:2)
-testid <- c(17:18)
-
-
-iterations=10
-n=NULL
-minit=5000
-maxit=100000
-
-#loose any NA
-CON=UMAPdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = method,
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = method,
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-    perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("1v2 ",ClusterSignificance::pvalue(pe))
-write(line,file="mlpoutput.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
-```
-
-```{r 2v3}
-# "control" v "test"
-#2v3
-conid <- c(5:6)
-testid <- c(9:10)
-
-iterations=10
-n=NULL
-minit=5000
-maxit=100000
-
-#loose any NA
-CON=UMAPdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = method,
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = method,
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-    perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("1v2 ",ClusterSignificance::pvalue(pe))
-write(line,file="mlpoutput.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
-```
-
-```{r 2v4}
-# "control" v "test"
-#2v4
-conid <- c(5:6)
-testid <- c(13:14)
-
-
-iterations=10
-n=NULL
-minit=5000
-maxit=100000
-
-#loose any NA
-CON=UMAPdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = method,
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = method,
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-    perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("1v2 ",ClusterSignificance::pvalue(pe))
-write(line,file="mlpoutput.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="mlpoutput.txt",append=TRUE)
-```
-
-```{r 2v5}
-# "control" v "test"
-#2v5
-conid <- c(5:6)
-testid <- c(17:18)
-
-#loose any NA
-CON=TSNEdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-   perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("2v5 ",ClusterSignificance::pvalue(pe))
-write(line,file="output.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="output.txt",append=TRUE)
-```
-
-```{r 3v4}
-# "control" v "test"
-#3v4
-conid <- c(9:10)
-testid <- c(13:14)
-
-#loose any NA
-CON=TSNEdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-   perhits <- length(beats[beats<0])
-    if ((perhits>0) & (i*iterations>minit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("3v4 ",ClusterSignificance::pvalue(pe))
-write(line,file="output.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="output.txt",append=TRUE)
-```
-```{r 3v5}
-# "control" v "test"
-#3 v 5
-conid <- c(9:10)
-testid <- c(17:18)
-
-#loose any NA
-CON=TSNEdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    n=n,
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data, 
-        n=n,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    flush.console()
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-perhits-real
-   perhits <- length(beats[beats<0])
-  if (((perhits>0) & (i*iterations>minit)) || ( i*iterations > maxit))
-        {solved=TRUE}
-}
-
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("3v5 ",ClusterSignificance::pvalue(pe))
-write(line,file="output.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="output.txt",append=TRUE)
-```
-
-```{r 4v5}
-# "control" v "test"
-#4 v 5
-conid <- c(13:14)
-testid <- c(17:18)
-
-#loose any NA
-CON=TSNEdata[,conid]
-CON= CON[complete.cases(CON), ]
-names(CON)=c("X","Y")
-TEST=TSNEdata[,testid]
-TEST= TEST[complete.cases(TEST), ]
-names(TEST)=c("X","Y")
-# For fair test don't tell Kmeans algo we have two pops ;-)
-data<-rbind(CON,TEST)
-data<-as.matrix(data)
-
-class1<-rep("Test", nrow(TEST))
-class2<-rep("Con",nrow(CON))
-classes=cbind(t(class1),t(class2))[1,]
-
-## Permute and plot. Using pcp 
-
-## Permute and plot. Using pcp 
-pe <- permute(
-    mat = data, 
-    iter = iterations, 
-    classes = classes, 
-    projmethod = "pcp",
-    verbose=FALSE)
-
-i=0
-solved=FALSE
-while(solved==FALSE){
-    i=i+1
-    pe1 <- permute(
-        mat = data,
-        iter = iterations, 
-        classes = classes, 
-        projmethod = "pcp",
-        seed=i*iterations,
-        verbose=FALSE)
-    pe<-c(pe,pe1)
-    print(i)
-    print(ClusterSignificance::pvalue(pe))
-    print(conf.int(pe, conf.level = 0.95))
-    
-    real=pe@scores.real$`Con vs Test`
-    perhits=pe@scores.vec$`Con vs Test`
-    beats<-real-perhits
-   perhits <- length(beats[beats<0])
-   print(perhits)
-   flush.console()
-    if (((perhits>0) & (i*iterations>minit)) || ( i*iterations > maxit))
-        {solved=TRUE}
-}
-plot(pe)
-ClusterSignificance::pvalue(pe)
-conf.int(pe, conf.level = 0.95)
-line <- paste0("4v5 ",ClusterSignificance::pvalue(pe))
-write(line,file="output.txt",append=TRUE)
-write(conf.int(pe, conf.level = 0.95),file="output.txt",append=TRUE)
-```
 
 When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
 
