@@ -1,24 +1,16 @@
-mlp using  1:2 and 3:4. Now real iteration:0.357272727272727
-0.3289138 0.3863975
-so no significant difference between UMPA clusters for 1st channel and its GAN
 
-mlp using  5:6 and 7:8. Now real iteration:0.662727272727273
-0.633927 0.690654
-mlp using  9:10 and 11:12. Now real iteration:0.000909090909090909
-0 0.00334791
-WITH THIS ONE THERE IS A DIFFERENCE
-mlp using  13:14 and 15:16. Now real iteration:0.999090909090909
-0.9949454 0.999977
-mlp using  17:18 and 19:20. Now real iteration:0.000909090909090909
-0 0.00334791
-AND THIS ONE TOO.
-mlp using  1:2 and 3:4. Now real iteration:0.357272727272727
-0.3289138 0.3863975
-mlp using  5:6 and 7:8. Now real iteration:0.662727272727273
-0.633927 0.690654
-mlp using  9:10 and 11:12. Now real iteration:0.000909090909090909
-0 0.00334791
-mlp using  13:14 and 15:16. Now real iteration:0.999090909090909
-0.9949454 0.999977
-mlp using  17:18 and 19:20. Now real iteration:0.000909090909090909
-0 0.00334791
+UMAPdata clustering, mlp using  1:2 and 3:4. Now real iteration:
+0.370833333333333
+0.3434322 0.3988693
+UMAPdata clustering, mlp using  5:6 and 7:8. Now real iteration:
+0.739166666666667
+0.7133399 0.7638158
+UMAPdata clustering, mlp using  9:10 and 11:12. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  13:14 and 15:16. Now real iteration:
+0.99
+0.9825972 0.9948225
+UMAPdata clustering, mlp using  17:18 and 19:20. Now real iteration:
+0.000192307692307692
+0 0.0007091483

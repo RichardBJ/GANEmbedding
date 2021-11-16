@@ -1,0 +1,32 @@
+
+
+UMAPdata clustering, mlp using  3:4 and 7:8. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  3:4 and 11:12. Now real iteration:
+0.02
+0.01285538 0.029613
+UMAPdata clustering, mlp using  3:4 and 15:16. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  3:4 and 19:20. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  7:8 and 11:12. Now real iteration:
+0.02
+0.01285538 0.029613
+UMAPdata clustering, mlp using  7:8 and 15:16. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  7:8 and 19:20. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  11:12 and 15:16. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  11:12 and 19:20. Now real iteration:
+0.000192307692307692
+0 0.0007091483
+UMAPdata clustering, mlp using  15:16 and 19:20. Now real iteration:
+0.000192307692307692
+0 0.0007091483

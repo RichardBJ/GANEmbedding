@@ -1,41 +1,35 @@
-
 ---
 title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
 ```{r packages}
 #if (!requireNamespace("BiocManager", quietly = TRUE))
     #install.packages("BiocManager")
-
 #BiocManager::install("ClusterSignificance")
-
 library(ClusterSignificance)
-
 ```
 
 ## Read data
 ```{r p9}
 TSNEdata=read.table('TSNE.csv',row.names=1,header=TRUE, sep=",", stringsAsFactors = FALSE,  dec=".", fill=TRUE)
 UMAPdata=read.table('umap.csv',row.names=1,header=TRUE, sep=",", stringsAsFactors = FALSE,  dec=".", fill=TRUE)
+head(UMAPdata)
+head(TSNEdata)
+```
+
+```{r setuprun, echo=FALSE}
+use <- "TSNEdata "
+assign("MANdata", TSNEdata)
+minit=1000
+maxit=5000
+method="mlp"
+iterations=100
+n=NULL
 ```
 
 ##Compare GANs versus respective RAWs
 ```{r GANvRAW}
-#you must use either UMAPdata or TSNEdata:
-#Assign the actual variable UMAPdata to the variable name MANdata for example
-assign("MANdata", UMAPdata)
-
-minit=1000
-maxit=500000
-method="mlp"
-iterations=50
-n=NULL
-
 dophenotype <- function (data, classes, label){
    ## Permute and plot. Using "method"
   pe <- permute(
@@ -45,7 +39,6 @@ dophenotype <- function (data, classes, label){
       classes = classes, 
       projmethod = method,
       verbose=FALSE)
-
   its=0
   solved=FALSE
   while(solved==FALSE){
@@ -60,32 +53,34 @@ dophenotype <- function (data, classes, label){
           verbose=FALSE)
       #assimilate all loops
       pe<-c(pe,pe1)
-      text<-paste(label,":",its*iterations)
+      text<-paste(label,". Now real iteration:" ,its*iterations)
       print(text)
       print(ClusterSignificance::pvalue(pe))
       print(conf.int(pe, conf.level = 0.95))
-      real=pe@scores.real$`GAN vs RAW`
-      perhits=pe@scores.vec$`GAN vs RAW`
-      beats<-perhits-real
-      perhits <- length(beats[beats<0])
+      flush.console()
+      labs<-unique(classes)
+      real=pe@scores.real$"GAN vs RAW"
+      simulated=pe@scores.vec$"GAN vs RAW"
+      beats<-simulated-real
+      perhits <- length(beats[beats>0])
       text<-paste(perhits," Hits so far")
       print(text)
       flush.console()
-      if ((perhits>0) & (its*iterations>minit))
-          {solved=TRUE}
-    }
-  return(pe)
-  } 
+      pedebug <<-pe
+      if ((perhits>0) & (its*iterations>minit)) {solved=TRUE}
+      if(its*iterations>maxit){solved=TRUE}
+}
+return(pe)
+} 
 
 for (pheno in seq(1,5)){
   i <- ((pheno-1)*4)+1
   j <- ((pheno-1)*4)+2
   k <- ((pheno-1)*4)+3
   l <- ((pheno-1)*4)+4
-
-  label <- paste(method," using  ",  i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
-  print(label)
   
+  label <- paste(use,"clustering, ",method," using  ", i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  print(label)
   #get data and loose any NA
   CON=MANdata[,i:j]
   CON= CON[complete.cases(CON), ]
@@ -104,7 +99,7 @@ for (pheno in seq(1,5)){
   plot(pe,sub=title)
   ClusterSignificance::pvalue(pe)
   conf.int(pe, conf.level = 0.95)
-  line <- paste0(label,ClusterSignificance::pvalue(pe))
+  line <- paste0(label,"\n",ClusterSignificance::pvalue(pe))
   write(line,file="autoGANvRAWoutput.txt",append=TRUE)
   write(conf.int(pe, conf.level = 0.95),file="autoGANvRAWoutput.txt",append=TRUE)
 }
@@ -114,16 +109,6 @@ for (pheno in seq(1,5)){
 
 ##Are the GANs different to each other?
 ```{r GANvsGAN, echo=FALSE}
-#you must use either UMAPdata or TSNEdata:
-#Assign the actual variable UMAPdata to the variable name MANdata for example
-assign("MANdata", UMAPdata)
-
-minit=1000
-maxit=500000
-method="mlp"
-iterations=50
-n=NULL
-
 dophenotype <- function (data, classes, label){
    ## Permute and plot. Using "method"
   pe <- permute(
@@ -148,26 +133,27 @@ dophenotype <- function (data, classes, label){
           verbose=FALSE)
       #assimilate all loops
       pe<-c(pe,pe1)
-      text<-paste(label,":",its*iterations)
+      text<-paste(label,". Now real iteration:" ,its*iterations)
       print(text)
       print(ClusterSignificance::pvalue(pe))
       print(conf.int(pe, conf.level = 0.95))
+      flush.console()
       labs<-unique(classes)
-      var<-paste(labs[1],"vs",labs[2])
       real=pe@scores.real$'GAN_1 vs GAN_2'
-      perhits=pe@scores.vec$'GAN_1 vs GAN_2'
-      if (is.null(perhits)){perhits=0}
-      beats<-perhits-real
-      perhits <- length(beats[beats<0])
+      simulated=pe@scores.vec$'GAN_1 vs GAN_2'
+      beats<-simulated-real
+      mydebug<<-beats
+      perhits <- length(beats[beats>0])
       text<-paste(perhits," Hits so far")
       print(text)
       flush.console()
-      if ((perhits>0) & (its*iterations>minit))
-          {solved=TRUE}
-    }
+      pedebug <<-pe
+      if ((perhits>0) & (its*iterations>minit)) {solved=TRUE}
+      if(its*iterations>maxit){solved=TRUE}
+  }
+
   return(pe)
   } 
-
 comparisons<-list(list(1,2),list(1,3),list(1,4),list(1,5),list(2,3), 
                   list(2,4), list(2,5), list(3,4), list(3,5), list(4,5))
 for (comp in comparisons){
@@ -180,7 +166,7 @@ for (comp in comparisons){
   j <- ((as.numeric(comp[1])-1)*4)+2
   k <- ((as.numeric(comp[2])-1)*4)+1
   l <- ((as.numeric(comp[2])-1)*4)+2
-  label <- paste("method ",method," using  ",  i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  label <- paste(use,"clustering, ",method," using  ", i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
   print(label)
   
   #get data and loose any NA
@@ -200,22 +186,352 @@ for (comp in comparisons){
   plot(pe)
   ClusterSignificance::pvalue(pe)
   conf.int(pe, conf.level = 0.95)
-  line <- paste0(label,ClusterSignificance::pvalue(pe))
+  line <- paste0(label,"\n",ClusterSignificance::pvalue(pe))
   write(line,file="AutoGANvGANoutput.txt",append=TRUE)
   write(conf.int(pe, conf.level = 0.95),file="AutoGANvGANoutput.txt",append=TRUE)
+}
+  
+```
+##Are the RAWs different to each other?
+```{r RAWvRAW, echo=FALSE}
+dophenotype <- function (data, classes, label){
+   ## Permute and plot. Using "method"
+  pe <- permute(
+      mat = data, 
+      n=n,
+      iter = iterations, 
+      classes = classes, 
+      projmethod = method,
+      verbose=FALSE)
+  its=0
+  solved=FALSE
+  while(solved==FALSE){
+      its=its+1
+      pe1 <- permute(
+          mat = data, 
+          n=n,
+          iter = iterations, 
+          classes = classes, 
+          projmethod = method,
+          seed=i*iterations,
+          verbose=FALSE)
+      #assimilate all loops
+      pe<-c(pe,pe1)
+      text<-paste(label,". Now real iteration:" ,its*iterations)
+      print(text)
+      print(ClusterSignificance::pvalue(pe))
+      print(conf.int(pe, conf.level = 0.95))
+      flush.console()
+      labs<-unique(classes)
+      real=pe@scores.real$"RAW_1 vs RAW_2"
+      simulated=pe@scores.vec$"RAW_1 vs RAW_2"
+      beats<-simulated-real
+      mydebug<<-beats
+      perhits <- length(beats[beats>0])
+      text<-paste(perhits," Hits so far")
+      print(text)
+      flush.console()
+      pedebug <<-pe
+      if ((perhits>0) & (its*iterations>minit)) {solved=TRUE}
+      if(its*iterations>maxit){solved=TRUE}
+  }
+
+  return(pe)
+  } 
+
+comparisons<-list(list(1,2),list(1,3),list(1,4),list(1,5),list(2,3), 
+                  list(2,4), list(2,5), list(3,4), list(3,5), list(4,5))
+for (comp in comparisons){
+  text<-paste(comp[1],":",comp[2])
+  print(text)
+}
+
+for (comp in comparisons){
+  i <- ((as.numeric(comp[1])-1)*4)+3
+  j <- ((as.numeric(comp[1])-1)*4)+4
+  k <- ((as.numeric(comp[2])-1)*4)+3
+  l <- ((as.numeric(comp[2])-1)*4)+4
+  label <- paste(use,"clustering, ",method," using  ", i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  print(label)
+  
+  #get data and loose any NA
+  CON=MANdata[,i:j]
+  CON= CON[complete.cases(CON), ]
+  names(CON)=c("X","Y")
+  TEST=MANdata[,k:l]
+  TEST= TEST[complete.cases(TEST), ]
+  names(TEST)=c("X","Y")
+
+  data<-rbind(CON,TEST)
+  data<-as.matrix(data)
+  class1<-rep('RAW_1', nrow(TEST))
+  class2<-rep('RAW_2',nrow(CON))
+  classes=cbind(t(class1),t(class2))[1,]  
+  pe<-dophenotype(data,classes,label)
+  plot(pe)
+  ClusterSignificance::pvalue(pe)
+  conf.int(pe, conf.level = 0.95)
+  line <- paste0(label,"\n",ClusterSignificance::pvalue(pe))
+  write(line,file="AutoRAWvRAWoutput.txt",append=TRUE)
+  write(conf.int(pe, conf.level = 0.95),file="AutoRAWvRAWoutput.txt",append=TRUE)
+}
+```
+
+```{r setuprun2, echo=FALSE}
+use <- "UMAPdata "
+assign("MANdata", UMAPdata)
+minit=1000
+maxit=5000
+method="mlp"
+iterations=100
+n=NULL
+```
+
+##Compare GANs versus respective RAWs
+```{r GANvRAW2}
+dophenotype <- function (data, classes, label){
+   ## Permute and plot. Using "method"
+  pe <- permute(
+      mat = data, 
+      n=n,
+      iter = iterations, 
+      classes = classes, 
+      projmethod = method,
+      verbose=FALSE)
+  its=0
+  solved=FALSE
+  while(solved==FALSE){
+      its=its+1
+      pe1 <- permute(
+          mat = data, 
+          n=n,
+          iter = iterations, 
+          classes = classes, 
+          projmethod = method,
+          seed=i*iterations,
+          verbose=FALSE)
+      #assimilate all loops
+      pe<-c(pe,pe1)
+      text<-paste(label,". Now real iteration:" ,its*iterations)
+      print(text)
+      print(ClusterSignificance::pvalue(pe))
+      print(conf.int(pe, conf.level = 0.95))
+      flush.console()
+      labs<-unique(classes)
+      real=pe@scores.real$"GAN vs RAW"
+      simulated=pe@scores.vec$"GAN vs RAW"
+      beats<-simulated-real
+      perhits <- length(beats[beats>0])
+      text<-paste(perhits," Hits so far")
+      print(text)
+      flush.console()
+      pedebug <<-pe
+      if ((perhits>0) & (its*iterations>minit)) {solved=TRUE}
+      if(its*iterations>maxit){solved=TRUE}
+}
+return(pe)
+} 
+
+for (pheno in seq(1,5)){
+  i <- ((pheno-1)*4)+1
+  j <- ((pheno-1)*4)+2
+  k <- ((pheno-1)*4)+3
+  l <- ((pheno-1)*4)+4
+  
+  label <- paste(use,"clustering, ",method," using  ", i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  print(label)
+  #get data and loose any NA
+  CON=MANdata[,i:j]
+  CON= CON[complete.cases(CON), ]
+  names(CON)=c("X","Y")
+  TEST=MANdata[,k:l]
+  TEST= TEST[complete.cases(TEST), ]
+  names(TEST)=c("X","Y")
+  # For fair test don't tell Kmeans algo we have two pops ;-)
+  data<-rbind(CON,TEST)
+  data<-as.matrix(data)
+  class1<-rep("GAN", nrow(TEST))
+  class2<-rep("RAW",nrow(CON))
+  classes=cbind(t(class1),t(class2))[1,]  
+  pe<-dophenotype(data,classes,label)
+  title<-paste("pheno=",pheno)
+  plot(pe,sub=title)
+  ClusterSignificance::pvalue(pe)
+  conf.int(pe, conf.level = 0.95)
+  line <- paste0(label,"\n",ClusterSignificance::pvalue(pe))
+  write(line,file="autoGANvRAWoutput.txt",append=TRUE)
+  write(conf.int(pe, conf.level = 0.95),file="autoGANvRAWoutput.txt",append=TRUE)
 }
   
 
 ```
 
+##Are the GANs different to each other?
+```{r GANvsGAN2, echo=FALSE}
+dophenotype <- function (data, classes, label){
+   ## Permute and plot. Using "method"
+  pe <- permute(
+      mat = data, 
+      n=n,
+      iter = iterations, 
+      classes = classes, 
+      projmethod = method,
+      verbose=FALSE)
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+  its=0
+  solved=FALSE
+  while(solved==FALSE){
+      its=its+1
+      pe1 <- permute(
+          mat = data, 
+          n=n,
+          iter = iterations, 
+          classes = classes, 
+          projmethod = method,
+          seed=i*iterations,
+          verbose=FALSE)
+      #assimilate all loops
+      pe<-c(pe,pe1)
+      text<-paste(label,". Now real iteration:" ,its*iterations)
+      print(text)
+      print(ClusterSignificance::pvalue(pe))
+      print(conf.int(pe, conf.level = 0.95))
+      flush.console()
+      labs<-unique(classes)
+      real=pe@scores.real$'GAN_1 vs GAN_2'
+      simulated=pe@scores.vec$'GAN_1 vs GAN_2'
+      beats<-simulated-real
+      mydebug<<-beats
+      perhits <- length(beats[beats>0])
+      text<-paste(perhits," Hits so far")
+      print(text)
+      flush.console()
+      pedebug <<-pe
+      if ((perhits>0) & (its*iterations>minit)) {solved=TRUE}
+      if(its*iterations>maxit){solved=TRUE}
+  }
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+  return(pe)
+  } 
+comparisons<-list(list(1,2),list(1,3),list(1,4),list(1,5),list(2,3), 
+                  list(2,4), list(2,5), list(3,4), list(3,5), list(4,5))
+for (comp in comparisons){
+  text<-paste(comp[1],":",comp[2])
+  print(text)
+}
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+for (comp in comparisons){
+  i <- ((as.numeric(comp[1])-1)*4)+1
+  j <- ((as.numeric(comp[1])-1)*4)+2
+  k <- ((as.numeric(comp[2])-1)*4)+1
+  l <- ((as.numeric(comp[2])-1)*4)+2
+  label <- paste(use,"clustering, ",method," using  ", i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  print(label)
+  
+  #get data and loose any NA
+  CON=MANdata[,i:j]
+  CON= CON[complete.cases(CON), ]
+  names(CON)=c("X","Y")
+  TEST=MANdata[,k:l]
+  TEST= TEST[complete.cases(TEST), ]
+  names(TEST)=c("X","Y")
+  # For fair test don't tell Kmeans algo we have two pops ;-)
+  data<-rbind(CON,TEST)
+  data<-as.matrix(data)
+  class1<-rep('GAN_1', nrow(TEST))
+  class2<-rep('GAN_2',nrow(CON))
+  classes=cbind(t(class1),t(class2))[1,]  
+  pe<-dophenotype(data,classes,label)
+  plot(pe)
+  ClusterSignificance::pvalue(pe)
+  conf.int(pe, conf.level = 0.95)
+  line <- paste0(label,"\n",ClusterSignificance::pvalue(pe))
+  write(line,file="AutoGANvGANoutput.txt",append=TRUE)
+  write(conf.int(pe, conf.level = 0.95),file="AutoGANvGANoutput.txt",append=TRUE)
+}
+  
+```
+##Are the RAWs different to each other?
+```{r RAWvRAW2, echo=FALSE}
+dophenotype <- function (data, classes, label){
+   ## Permute and plot. Using "method"
+  pe <- permute(
+      mat = data, 
+      n=n,
+      iter = iterations, 
+      classes = classes, 
+      projmethod = method,
+      verbose=FALSE)
+  its=0
+  solved=FALSE
+  while(solved==FALSE){
+      its=its+1
+      pe1 <- permute(
+          mat = data, 
+          n=n,
+          iter = iterations, 
+          classes = classes, 
+          projmethod = method,
+          seed=i*iterations,
+          verbose=FALSE)
+      #assimilate all loops
+      pe<-c(pe,pe1)
+      text<-paste(label,". Now real iteration:" ,its*iterations)
+      print(text)
+      print(ClusterSignificance::pvalue(pe))
+      print(conf.int(pe, conf.level = 0.95))
+      flush.console()
+      labs<-unique(classes)
+      real=pe@scores.real$"RAW_1 vs RAW_2"
+      simulated=pe@scores.vec$"RAW_1 vs RAW_2"
+      beats<-simulated-real
+      mydebug<<-beats
+      perhits <- length(beats[beats>0])
+      text<-paste(perhits," Hits so far")
+      print(text)
+      flush.console()
+      pedebug <<-pe
+      if ((perhits>0) & (its*iterations>minit)) {solved=TRUE}
+      if(its*iterations>maxit){solved=TRUE}
+  }
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+  return(pe)
+  } 
 
+comparisons<-list(list(1,2),list(1,3),list(1,4),list(1,5),list(2,3), 
+                  list(2,4), list(2,5), list(3,4), list(3,5), list(4,5))
+for (comp in comparisons){
+  text<-paste(comp[1],":",comp[2])
+  print(text)
+}
 
+for (comp in comparisons){
+  i <- ((as.numeric(comp[1])-1)*4)+3
+  j <- ((as.numeric(comp[1])-1)*4)+4
+  k <- ((as.numeric(comp[2])-1)*4)+3
+  l <- ((as.numeric(comp[2])-1)*4)+4
+  label <- paste(use,"clustering, ",method," using  ", i,":",j," and ", k,":",l, ". Now real iteration:" ,sep="")
+  print(label)
+  
+  #get data and loose any NA
+  CON=MANdata[,i:j]
+  CON= CON[complete.cases(CON), ]
+  names(CON)=c("X","Y")
+  TEST=MANdata[,k:l]
+  TEST= TEST[complete.cases(TEST), ]
+  names(TEST)=c("X","Y")
+
+  data<-rbind(CON,TEST)
+  data<-as.matrix(data)
+  class1<-rep('RAW_1', nrow(TEST))
+  class2<-rep('RAW_2',nrow(CON))
+  classes=cbind(t(class1),t(class2))[1,]  
+  pe<-dophenotype(data,classes,label)
+  plot(pe)
+  ClusterSignificance::pvalue(pe)
+  conf.int(pe, conf.level = 0.95)
+  line <- paste0(label,"\n",ClusterSignificance::pvalue(pe))
+  write(line,file="AutoRAWvRAWoutput.txt",append=TRUE)
+  write(conf.int(pe, conf.level = 0.95),file="AutoRAWvRAWoutput.txt",append=TRUE)
+}
 ```
